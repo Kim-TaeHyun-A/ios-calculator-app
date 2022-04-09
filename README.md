@@ -13,13 +13,23 @@
 - IBOutlet / IBAction의 활용
 - 스택뷰의 활용
 - 스크롤뷰의 활용
+
+---
+
+## PR
+
+[STEP 1 PR](https://github.com/yagom-academy/ios-calculator-app/pull/163)
+
+[STEP 2 PR](https://github.com/yagom-academy/ios-calculator-app/pull/183)
+
+[step 3 PR](https://github.com/yagom-academy/ios-calculator-app/pull/203)
+
 ---
 ## [STEP 1]
 
 ## UML
 
 ![Class Diagram-6](https://user-images.githubusercontent.com/70807352/158533031-c41acf4d-19f3-4650-a556-c4ed11d0aa31.png)
-
 
 
 ### 구현한 내용
@@ -191,3 +201,139 @@
 12. 메스드만 가지는 enum
     - 기존에 값 타입은 주로 struct을 사용하고 case가 필요한 경우만 enum을 사용했습니다. 그런데, 이번 스탭의 UML을 보니 case가 없는 enum의 구현을 요구해서 그 이유에 대한 고민을 했습니다.
     - enum의 경우 케이스가 없으니 인스턴스 생성이 제한적이어서 특정 목적의 타입 메서드를 모아놓기에 좋을 것이라고 생각됩니다.
+
+ 
+---
+    
+## Step3
+    
+---
+    
+##구현한 내용
+
+CalculatorViewController: UIViewController
+
+calculatorInput 프로퍼티 : 누적으로 입력된 숫자와 연산자 문자열을 저장
+
+hasFirstInput 프로퍼티 : 스크롤 뷰 내부의 content인 스택에 값을 넣은 적이 있는지 확인. 제일 앞에 연산자가 오지 않기 때문에 구분 필요.
+
+아울렛 변수
+
+scrollView : 스크롤 뷰 제일 하단에 추가되는 스택이 고정적으로 출력되게 할 때 사용됨
+inputStackView : 입력된 숫자와 연산자가 한 줄씩(각각 하나의 스택 구성하여) 들어가는 스택뷰
+operatorLabel : 입력된 연산자를 보임
+numberLabel : 현재 입력 중인 숫자 보임
+acButton : 전체 입력 스택(inputStackView)을 비움
+ceButton : 현재 입력 중인 숫자(numberLabel.text)를 제거
+prefixButton : 현재 입력 중인 숫자의 제일 앞에서 -/+를 반전시킴
+연산자 버튼들(+, -, /, *, = )
+dotButton
+zeroButton : 0
+doubleZeroButton : 00
+숫자 버튼(1~9)
+@IBAction func touchUpNumberButton(_ sender: UIButton)
+
+: 모든 숫자 버튼이 연결된 액션 메서드
+
+: 입력된 버튼을 확인하고 옳은 입력인지 확인(ex. 00이 눌렸는지, “.”이 한 번 이상 눌렸는지 확인)
+
+: 첫 숫자가 아닌 경우는 0이나 00을 눌러도 0이 입력될 수 있도록 처리
+
+: 현재 숫자 레이블에 입력될 첫 숫자이면서 .이 아닌 경우는 현재 입력값으로 숫자 레이블을 대체하고
+
+그렇지 않다면 기존 값에 연결되어야 하기에 append 시킴
+
+@IBAction func touchUpOperatorButton(_ sender: UIButton)
+
+: 모든 연산자 버튼과 연결된 액션 메서드
+
+: 현재 숫자 레이블의 값이 0이고 이제껏 입력된 숫자가 없으면 무시
+
+: 연산자가 눌리면 inputStackView에 스택을 추가
+
+: 연산자가 = 이면 calculatorInput을 파싱하여 계산
+
+: 계산된 결과가 20자리 이상이면 에러 처리
+
+: 소수점은 10자리까지
+
+: 숫자는 3자리씩 끊어서 , 로 구분
+
+: 결과를 숫자 레이블에 출력하고 연산자 레이블은 값을 없앰
+
+: 결과가 에러면 NaN 출력
+
+: 계산기에서 입력된 숫자가 있는 경우에만 연산자가 연산자 레이블에 표시되고 현재 입력 중이던 숫자가 0으로 갱신 되도록
+
+@IBAction func touchUpFunctionButton(_ sender: UIButton)
+
+: AC, CE, prefix(-/+)를 구분하여 적절한 기능 수행
+
+viewDidLoad() : 숫자 레이블과 연산자 레이블 초기화
+
+addStack()
+
+: 수평으로 쌓이는 스택에 연산자와 숫자를 넣고 해당 스택을 inputStackView에 추가
+
+: 첫 스택인 경우는 operator가 없지만 이후는 있으므로 구분
+
+: calculatorInput 에 스택에 들어간 내용 추가
+
+: 스크롤 뷰에서 새로운 값이 제일 하단에 고정되어 위치하도록
+
+removeStack()
+
+: inputStack의 서브뷰를 순회하면 제거
+
+: 초기화 진행
+
+findNumber(of button: UIButton) throws -> String
+
+findOperator(of button: UIButton) throws -> String
+
+findFunction(of button: UIButton) throws
+
+configurePrefix()
+
+isValidNumber(input: String, currentNumber: String?) -> Bool : 0과 . 에 관하여 유효한 입력인지 확인
+
+고민한 점
+
+numberLabel.text 값 갱신
+
+가독성을 위해 nubmerLabel.text를 변수에 담아서 사용하고 값을 갱신하려고 했지만 해당 값이 String이어서 의도대로 수정되지 않았습니다. 따라서, 값을 수정할 때는 원래 프로퍼티에 직접 접근하여 값을 갱신합니다.
+
+스토리보드의 stackView 이용
+
+이번 프로젝트에서는 동적으로 스택뷰가 스크롤뷰에 추가됩니다. 이때, 기존에 스토리보드에 있던 스택뷰를 사용하면 새로운 값이 추가되는 것이 아니라 기존 값이 변경됩니다. 따라서, 스택이 추가될 때마다 새로운 스택뷰를 만들어서 추가하는 방식으로 구현했습니다.
+
+스크롤 뷰 제일 하단에 최신 값 오도록 구성
+
+스크롤 뷰의 func setContentOffset(_ contentOffset: CGPoint, animated: Bool)
+
+를 사용해서 CGPoint를 설정합니다.
+
+https://www.objc.io/issues/3-views/scroll-view/
+
+스크린샷 2022-03-24 오후 1 21 00
+
+scrollView.bounds 높이가 추가되는 스택뷰의 높이인 것 같습니다. y좌표를 컨텐츠 높이에서 스택뷰의 높이를 뺀 값으로 설정해서 스크롤 뷰의 제일 하단에 위치되는 것으로 생각됩니다.🤔
+
+NumberFormatter 이용해서 숫자 표현하기
+
+스크린샷 2022-03-24 오후 12 04 47
+스크린샷 2022-03-24 오후 12 07 19
+
+반올림이 어떻게 되는지, 소수점이 어디까지 표현되는지를 디버깅을 통해 확인해서 원하는 결과를 얻을 수 있도록 구현했습니다.
+
+20자리를 최대 수로 설정하기
+
+String(format:) 을 사용해서 20자리의 숫자를 얻어내고 이후 NumberFormatter를 적용시키 원하는 형태의 숫자로 만들고 싶었지만 두 개를 동시에 적용시키는 것에 실패했습니다.😭
+
+String(format: “%20f”, 결과) 한 값을 Formatte.string()의 인자로 전달하니 출력값이 아예 나오지를 않습니다. Double형태가 아니어서 오류나는 것 같아서 타입을 바꾸기도 했지만 의도대로 동작하지는 않았습니다.
+
+그래서, 간단하게 20자리가 이상인 경우에서 에러처리를 하도록 구현하게 되었습니다.😢
+
+함수 작게 나누기
+기능적으로 하나의 역할을 한다고 생각되어 몇 함수의 길이가 너무 길어져서 고민입니다.🤔
+개인적으로 addStack() 나 touchUpOperatorButton() 의 경우 함수를 나누기가 애매하다고 생각됩니다. 😭
